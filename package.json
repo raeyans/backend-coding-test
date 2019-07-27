@@ -7,8 +7,9 @@
     "test": "tests"
   },
   "scripts": {
+    "lint": "eslint index.js src/**",
     "test": "mocha tests",
-    "start": "node index.js"
+    "start": "npm run lint & npm run test & node index.js"
   },
   "keywords": [
     "Xendit"
