@@ -1,0 +1,144 @@
+
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "API Documentation by Xendit",
+    "description": "This is API Documentation which is mandatory to see before you integrate with Xendit"
+  },
+  "host": "localhost:8010",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Get API Documentation Status",
+        "responses": {
+          "200": {
+            "description": "Healthy"
+          }
+        }
+      }
+    },
+    "/rides": {
+      "post": {
+        "tags": [
+          "Rides"
+        ],
+        "description": "Create a new ride in system",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Ride object that we want to create",
+            "schema": {
+              "$ref": "#/definitions/Rides"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "New ride is created"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Rides"
+        ],
+        "summary": "Get all rides in system",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of rides",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Rides"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rides/{id}": {
+      "parameters": [
+        {
+          "name": "rideId",
+          "in": "path",
+          "required": true,
+          "description": "ID of ride that we want to find",
+          "type": "string"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Rides"
+        ],
+        "summary": "Get ride data with given ID",
+        "responses": {
+          "200": {
+            "description": "Ride data is found",
+            "schema": {
+              "$ref": "#/definitions/Rides"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Rides": {
+      "required": [
+        "start_lat",
+        "start_long",
+        "end_lat",
+        "end_long",
+        "rider_name",
+        "driver_name",
+        "driver_vehicle"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "start_lat": {
+          "type": "number",
+          "format": "float"
+        },
+        "start_long": {
+          "type": "number",
+          "format": "float"
+        },
+        "end_lat": {
+          "type": "number",
+          "format": "float"
+        },
+        "end_long": {
+          "type": "number",
+          "format": "float"
+        },
+        "rider_name": {
+          "type": "string"
+        },
+        "driver_name": {
+          "type": "string"
+        },
+        "driver_vehicle": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
