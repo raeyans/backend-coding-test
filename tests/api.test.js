@@ -135,6 +135,18 @@ describe('API tests', () => {
     describe('Pagination', () => {
         it('should return default 25 rows', (done) => {
             request(app)
+                .get('/rides')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                    if (err) return done(err);
+                    assert.equal(res.body.length, 25);
+                    done();
+                });
+        });
+
+        it('should return default 25 rows', (done) => {
+            request(app)
                 .get('/rides?page=1')
                 .expect('Content-Type', /json/)
                 .expect(200)
@@ -167,6 +179,35 @@ describe('API tests', () => {
                     assert.equal(res.body.length, 5);
                     done();
                 });
+        });
+
+        it('should throw error', (done) => {
+            request(app)
+                .get('/rides?page=foo')
+                .expect('Content-Type', /json/)
+                .expect(200, {
+                    error_code: 'SERVER_ERROR',
+                    message: 'Unknown error',
+                }, done);
+        });
+    });
+
+    describe('dbAll', () => {
+        const dbController = require('../src/db-controller');
+        const { dbAll } = dbController(db);
+
+        it('should return data rows', async () => {
+            const rows = await dbAll('SELECT * FROM Rides');
+            assert.equal(rows.length, 31);
+        });
+
+        it ('should throw server error', async () => {
+            try {
+                await dbAll('SELECT * FROM Rides WHERE foo=1');
+            }
+            catch (error) {
+                assert.deepEqual(error, { error_code: 'SERVER_ERROR', message: 'Unknown error' });
+            }
         });
     });
 });
