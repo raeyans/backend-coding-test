@@ -135,6 +135,18 @@ describe('API tests', () => {
     describe('Pagination', () => {
         it('should return default 25 rows', (done) => {
             request(app)
+                .get('/rides')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                    if (err) return done(err);
+                    assert.equal(res.body.length, 25);
+                    done();
+                });
+        });
+
+        it('should return default 25 rows', (done) => {
+            request(app)
                 .get('/rides?page=1')
                 .expect('Content-Type', /json/)
                 .expect(200)
@@ -167,6 +179,16 @@ describe('API tests', () => {
                     assert.equal(res.body.length, 5);
                     done();
                 });
+        });
+
+        it('should throw error', (done) => {
+            request(app)
+                .get('/rides?page=foo')
+                .expect('Content-Type', /json/)
+                .expect(200, {
+                    error_code: 'SERVER_ERROR',
+                    message: 'Unknown error',
+                }, done);
         });
     });
 
