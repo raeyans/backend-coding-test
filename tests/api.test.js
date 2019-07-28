@@ -210,4 +210,21 @@ describe('API tests', () => {
             }
         });
     });
+
+    describe('Prevent SQL injection', () => {
+        it('should prevent injection ', (done) => {
+            request(app)
+                .get('/rides/9\' DELETE FROM Rides WHERE (rideID>3);')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                    if (err) return done(err);
+                    assert.deepEqual(res.body, {
+                        error_code: 'RIDES_NOT_FOUND_ERROR',
+                        message: 'Could not find any rides',
+                    });
+                    done();
+                });
+        });
+    });
 });
