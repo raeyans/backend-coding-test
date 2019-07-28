@@ -55,6 +55,22 @@
           "Rides"
         ],
         "summary": "Get all rides in system",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
         "produces": [
           "application/json"
         ],
