@@ -65,32 +65,29 @@ module.exports = (db) => {
             }
 
             db.all('SELECT * FROM Rides WHERE rideID = ?', this.lastID, function (err, rows) {
-                if (err) {
-                    return res.send({
-                        error_code: 'SERVER_ERROR',
-                        message: 'Unknown error'
-                    });
-                }
-
                 res.send(rows);
             });
         });
     });
 
     app.get('/rides', (req, res) => {
-        db.all('SELECT * FROM Rides', function (err, rows) {
+        const page = (req.query.page !== undefined) ? Number(req.query.page) : 1;
+        const limit = (req.query.limit !== undefined) ? Number(req.query.limit) : 25;
+        let sql, params = [];
+
+        if (page > 0) {
+            sql = 'SELECT * FROM Rides LIMIT ? OFFSET ?';
+            const offset = (page - 1) * limit;
+            params = [limit, offset];
+        }
+
+        db.all(sql, params, function (err, rows) {
             if (err) {
-                return res.send({
-                    error_code: 'SERVER_ERROR',
-                    message: 'Unknown error'
-                });
+                return res.send({ error_code: 'SERVER_ERROR', message: 'Unknown error' });
             }
 
             if (rows.length === 0) {
-                return res.send({
-                    error_code: 'RIDES_NOT_FOUND_ERROR',
-                    message: 'Could not find any rides'
-                });
+                return res.send({ error_code: 'RIDES_NOT_FOUND_ERROR', message: 'Could not find any rides' });
             }
 
             res.send(rows);
@@ -100,17 +97,11 @@ module.exports = (db) => {
     app.get('/rides/:id', (req, res) => {
         db.all(`SELECT * FROM Rides WHERE rideID='${req.params.id}'`, function (err, rows) {
             if (err) {
-                return res.send({
-                    error_code: 'SERVER_ERROR',
-                    message: 'Unknown error'
-                });
+                return res.send({ error_code: 'SERVER_ERROR', message: 'Unknown error' });
             }
 
             if (rows.length === 0) {
-                return res.send({
-                    error_code: 'RIDES_NOT_FOUND_ERROR',
-                    message: 'Could not find any rides'
-                });
+                return res.send({ error_code: 'RIDES_NOT_FOUND_ERROR', message: 'Could not find any rides' });
             }
 
             res.send(rows);

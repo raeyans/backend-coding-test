@@ -13,6 +13,12 @@ describe('API tests', () => {
         db.serialize((err) => {
             if (err) return done(err);
             buildSchemas(db);
+
+            for (let counter = 0; counter < 30; counter++) {
+                db.run(`INSERT INTO Rides (startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle)
+                  VALUES (?, ?, ?, ?, ?, ?, ?)`, [0, 0, 0, 0, `Rider ${counter+1}`, `Driver ${counter+1}`, 'Car']);
+            }
+
             done();
         });
     });
@@ -23,18 +29,6 @@ describe('API tests', () => {
                 .get('/health')
                 .expect('Content-Type', /text/)
                 .expect(200, done);
-        });
-    });
-
-    describe('GET /rides', () => {
-        it('should return error could not find any rides', (done) => {
-            request(app)
-                .get('/rides')
-                .expect('Content-Type', /json/)
-                .expect(200, {
-                    error_code: 'RIDES_NOT_FOUND_ERROR',
-                    message: 'Could not find any rides',
-                }, done);
         });
     });
 
@@ -55,7 +49,7 @@ describe('API tests', () => {
                 .expect(200)
                 .end(function(err, res) {
                     if (err) return done(err);
-                    assert.equal(res.body[0].rideID, 1);
+                    assert.equal(res.body[0].rideID, 31);
                     assert.ok(res.body[0].created);
                     done();
                 });
@@ -80,6 +74,25 @@ describe('API tests', () => {
                 }, done);
         });
 
+        it('should return latitude longitude validation error', (done) => {
+            request(app)
+                .post('/rides')
+                .send({
+                    start_lat: 0,
+                    start_long: 0,
+                    end_lat: 0,
+                    end_long: 200,
+                    rider_name: 'Rider',
+                    driver_name: 'Driver',
+                    driver_vehicle: 'Car',
+                })
+                .expect('Content-Type', /json/)
+                .expect(200, {
+                    error_code: 'VALIDATION_ERROR',
+                    message: 'End latitude and longitude must be between -90 - 90 and -180 to 180 degrees respectively',
+                }, done);
+        });
+
         it('should return empty string validation error', (done) => {
             request(app)
                 .post('/rides')
@@ -100,20 +113,6 @@ describe('API tests', () => {
         });
     });
 
-    describe('GET /rides', () => {
-        it('should return rides', (done) => {
-            request(app)
-                .get('/rides')
-                .expect('Content-Type', /json/)
-                .expect(200)
-                .end(function(err, res) {
-                    if (err) return done(err);
-                    assert.equal(res.body.length, 1);
-                    done();
-                });
-        });
-    });
-
     describe('GET /rides/{id}', () => {
         it('should return a ride', (done) => {
             request(app)
@@ -124,12 +123,50 @@ describe('API tests', () => {
 
         it('should error could not find any rides', (done) => {
             request(app)
-                .get('/rides/2')
+                .get('/rides/99')
                 .expect('Content-Type', /json/)
                 .expect(200, {
                     error_code: 'RIDES_NOT_FOUND_ERROR',
                     message: 'Could not find any rides',
                 }, done);
+        });
+    });
+
+    describe('Pagination', () => {
+        it('should return default 25 rows', (done) => {
+            request(app)
+                .get('/rides?page=1')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                    if (err) return done(err);
+                    assert.equal(res.body.length, 25);
+                    done();
+                });
+        });
+
+        it('should return page 2', (done) => {
+            request(app)
+                .get('/rides?page=2')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                    if (err) return done(err);
+                    assert.equal(res.body[0].rideID, 26);
+                    done();
+                });
+        });
+
+        it('should return limit 5 rows', (done) => {
+            request(app)
+                .get('/rides?page=1&limit=5')
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function(err, res) {
+                    if (err) return done(err);
+                    assert.equal(res.body.length, 5);
+                    done();
+                });
         });
     });
 });
