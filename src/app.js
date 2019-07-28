@@ -3,17 +3,21 @@
 const express = require('express');
 const app = express();
 const swaggerUi = require('swagger-ui-express');
-const swaggerDocument = require('../swagger.json');
-
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
 
+const swaggerDocument = require('../swagger.json');
+const dbController = require('./db-controller');
+
+
 module.exports = (db) => {
+    const { dbAll, dbRun } = dbController(db);
+
     app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
     app.get('/health', (req, res) => res.send('Healthy'));
 
-    app.post('/rides', jsonParser, (req, res) => {
+    app.post('/rides', jsonParser, async (req, res) => {
         const startLatitude = Number(req.body.start_lat);
         const startLongitude = Number(req.body.start_long);
         const endLatitude = Number(req.body.end_lat);
@@ -59,18 +63,17 @@ module.exports = (db) => {
 
         var values = [req.body.start_lat, req.body.start_long, req.body.end_lat, req.body.end_long, req.body.rider_name, req.body.driver_name, req.body.driver_vehicle];
 
-        db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', values, function (err) {
-            if (err) {
-                return res.send({ error_code: 'SERVER_ERROR', message: 'Unknown error' });
-            }
-
-            db.all('SELECT * FROM Rides WHERE rideID = ?', this.lastID, function (err, rows) {
-                res.send(rows);
-            });
-        });
+        try {
+            const lastID = await dbRun('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', values);
+            const rows = await dbAll('SELECT * FROM Rides WHERE rideID = ?', lastID);
+            res.send(rows);
+        }
+        catch (error) {
+            return res.send(error);
+        }
     });
 
-    app.get('/rides', (req, res) => {
+    app.get('/rides', async (req, res) => {
         const page = (req.query.page !== undefined) ? Number(req.query.page) : 1;
         const limit = (req.query.limit !== undefined) ? Number(req.query.limit) : 25;
         let sql, params = [];
@@ -81,31 +84,23 @@ module.exports = (db) => {
             params = [limit, offset];
         }
 
-        db.all(sql, params, function (err, rows) {
-            if (err) {
-                return res.send({ error_code: 'SERVER_ERROR', message: 'Unknown error' });
-            }
-
-            if (rows.length === 0) {
-                return res.send({ error_code: 'RIDES_NOT_FOUND_ERROR', message: 'Could not find any rides' });
-            }
-
+        try {
+            const rows = await dbAll(sql, params);
             res.send(rows);
-        });
+        }
+        catch (error) {
+            return res.send(error);
+        }
     });
 
-    app.get('/rides/:id', (req, res) => {
-        db.all(`SELECT * FROM Rides WHERE rideID='${req.params.id}'`, function (err, rows) {
-            if (err) {
-                return res.send({ error_code: 'SERVER_ERROR', message: 'Unknown error' });
-            }
-
-            if (rows.length === 0) {
-                return res.send({ error_code: 'RIDES_NOT_FOUND_ERROR', message: 'Could not find any rides' });
-            }
-
+    app.get('/rides/:id', async (req, res) => {
+        try {
+            const rows = await dbAll(`SELECT * FROM Rides WHERE rideID='${req.params.id}'`);
             res.send(rows);
-        });
+        }
+        catch (error) {
+            return res.send(error);
+        }
     });
 
     return app;

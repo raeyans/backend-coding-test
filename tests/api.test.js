@@ -169,4 +169,23 @@ describe('API tests', () => {
                 });
         });
     });
+
+    describe('dbAll', () => {
+        const dbController = require('../src/db-controller');
+        const { dbAll } = dbController(db);
+
+        it('should return data rows', async () => {
+            const rows = await dbAll('SELECT * FROM Rides');
+            assert.equal(rows.length, 31);
+        });
+
+        it ('should throw server error', async () => {
+            try {
+                await dbAll('SELECT * FROM Rides WHERE foo=1');
+            }
+            catch (error) {
+                assert.deepEqual(error, { error_code: 'SERVER_ERROR', message: 'Unknown error' });
+            }
+        });
+    });
 });
