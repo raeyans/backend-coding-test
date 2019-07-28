@@ -1,0 +1,23 @@
+config:
+  target: "http://localhost:8010"
+  phases:
+    - duration: 30
+      arrivalRate: 26
+scenarios:
+  - flow:
+    - get:
+        url: "/health"
+    - post:
+        url: "/rides"
+        json:
+          start_lat: 0
+          start_long: 0
+          end_lat: 0
+          end_long: 0
+          rider_name: "Rider"
+          driver_name: "Driver"
+          driver_vehicle: "Car"
+    - get:
+        url: "/rides"
+    - get:
+        url: "/rides/1"
